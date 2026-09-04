@@ -50,4 +50,98 @@ partialCode=function(code){try{const parsed=parse(code),pallet=state.pallets.fin
 function enhanceReceiving(){const left=document.querySelector('.card.span-7'),canvas=document.querySelector('#signature'),clear=document.querySelector('#clear'),confirm=document.querySelector('#confirm');if(!left||!canvas||!clear||!confirm)return;const pending=(state.partials||[]).filter(p=>p.status==='PENDENTE'),selected=state.batchPartials||[],pallets=(state.batch||[]).map(id=>state.pallets.find(p=>p.id===id&&p.status==='PRONTO')).filter(Boolean),manual=route==='/admin'?`<details><summary class="small">Inserir código manualmente</summary><form id="batch" class="form"><input name="code" required><button>Adicionar</button></form></details>`:'';left.innerHTML=`<h2>${route==='/admin'?'Receber transferência':'Receber transferência em lote'}</h2><div class="scanner"><button class="accent camera" data-mode="batch">Ler QR Code</button>${manual}</div><ul class="scanlist">${pallets.map(p=>`<li>${esc(p.product)} · OP ${esc(p.op)} · ${fmt(p.quantity)} un.<button class="secondary remove" data-id="${esc(p.id)}">Remover</button></li>`).join('')||'<li class="small">Nenhum palete adicionado.</li>'}</ul><div class="avulso-enhanced"><h3>Unidades avulsas em recebimento</h3>${selected.map(id=>{const p=pending.find(x=>x.id===id);return p?`<p><span class="badge received">AVULSO</span> ${esc(p.product)} · OP ${esc(p.op)} · ${fmt(p.quantity)} un. <button class="secondary av-remove" data-id="${p.id}">Retirar</button></p>`:''}).join('')||'<p class="small">Nenhuma unidade avulsa adicionada.</p>'}<h3>Unidades avulsas disponíveis</h3>${pending.filter(p=>!selected.includes(p.id)).map(p=>`<p><span class="badge received">AVULSO</span> ${esc(p.product)} · OP ${esc(p.op)} · ${fmt(p.quantity)} un. <button class="secondary av-add" data-id="${p.id}">Adicionar</button></p>`).join('')||'<p class="small">Nenhuma unidade avulsa disponível.</p>'}</div>`;bindPublic();document.querySelectorAll('.av-add').forEach(b=>b.onclick=()=>{state.batchPartials=[...selected,b.dataset.id];state.feedback={text:'Unidade avulsa adicionada ao recebimento.'};load()});document.querySelectorAll('.av-remove').forEach(b=>b.onclick=()=>{state.batchPartials=selected.filter(id=>id!==b.dataset.id);state.feedback={text:'Unidade avulsa retirada do recebimento.'};load()});const refresh=()=>{confirm.disabled=!(canvas.dataset.signed&&((state.batch||[]).length+(state.batchPartials||[]).length))};confirm.disabled=true;const ctx=canvas.getContext('2d');ctx.lineWidth=3;ctx.lineCap='round';let drawing=false;const position=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}};canvas.onpointerdown=e=>{drawing=true;canvas.setPointerCapture?.(e.pointerId);const p=position(e);ctx.beginPath();ctx.moveTo(p.x,p.y);canvas.dataset.signed='1';refresh()};canvas.onpointermove=e=>{if(!drawing)return;const p=position(e);ctx.lineTo(p.x,p.y);ctx.stroke();canvas.dataset.signed='1';refresh()};canvas.onpointerup=canvas.onpointerleave=()=>drawing=false;const actions=document.createElement('div');actions.className='signature-actions';clear.parentElement.replaceWith(actions);actions.append(clear,confirm);clear.onclick=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);delete canvas.dataset.signed;refresh()};confirm.onclick=async()=>{if(confirm.disabled)return;try{await api('/public/receipts',{method:'POST',body:JSON.stringify({ids:state.batch,partialIds:state.batchPartials||[],signature:canvas.toDataURL()})});state.batch=[];state.batchPartials=[];state.feedback={text:'Recebimento confirmado com sucesso.'};load()}catch(e){msg(e.message,true)}}}
 document.head.insertAdjacentHTML('beforeend','<style>button:disabled,button:disabled:hover{cursor:not-allowed;opacity:.45;filter:none}.signature-actions{display:flex!important;gap:.7rem!important;align-items:center;margin-top:.9rem}</style>');
 camera=async function(mode){if(!window.isSecureContext)return msg('Para usar a câmera, acesse o sistema por HTTPS. O acesso atual não é seguro.',true);if(!navigator.mediaDevices?.getUserMedia)return msg('Este navegador não liberou acesso à câmera. Verifique a permissão do site.',true);const modal=document.createElement('div');modal.className='modal';modal.innerHTML=`<div class="modal-card"><h2>Ler QR Code</h2><p class="small" id="camera-status">Aponte a câmera para o QR Code.</p><video autoplay playsinline></video><p><button class="secondary">Cancelar</button></p></div>`;document.body.append(modal);let stream;const close=()=>{stream?.getTracks().forEach(track=>track.stop());modal.remove()};modal.querySelector('button').onclick=close;try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});const video=modal.querySelector('video'),status=modal.querySelector('#camera-status');video.srcObject=stream;await video.play();const canvas=document.createElement('canvas'),context=canvas.getContext('2d',{willReadFrequently:true}),detector=window.BarcodeDetector?new BarcodeDetector({formats:['qr_code']}):null;const found=code=>{close();if(mode==='register')register(code);else if(mode==='partial')partialCode(code);else add(code)};const scan=async()=>{if(!modal.isConnected)return;if(!video.videoWidth||!video.videoHeight){setTimeout(scan,120);return}let code='';if(detector){const result=await detector.detect(video).catch(()=>[]);code=result[0]?.rawValue||''}if(!code&&window.jsQR){canvas.width=video.videoWidth;canvas.height=video.videoHeight;context.drawImage(video,0,0,canvas.width,canvas.height);const result=window.jsQR(context.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,{inversionAttempts:'dontInvert'});code=result?.data||''}if(code)return found(code);status.textContent='Aponte a câmera para o QR Code.';setTimeout(scan,120)};scan()}catch(error){close();const blocked=error?.name==='NotAllowedError'||error?.name==='SecurityError';msg(blocked?'A câmera foi bloqueada. Confirme a permissão do navegador e o acesso por HTTPS.':'Não foi possível abrir a câmera. Verifique se existe uma câmera disponível.',true)}};
+// Leitor aprimorado: prioriza a traseira, permite trocar lentes e usa zoom/foco
+// quando o navegador expõe essas capacidades.
+camera=async function(mode){
+  if(!window.isSecureContext)return msg('Para usar a câmera, acesse o sistema por HTTPS. O acesso atual não é seguro.',true);
+  if(!navigator.mediaDevices?.getUserMedia)return msg('Este navegador não liberou acesso à câmera. Verifique a permissão do site.',true);
+
+  const modal=document.createElement('div');
+  modal.className='modal';
+  modal.innerHTML=`<div class="modal-card camera-modal"><h2>Ler QR Code</h2><p class="small" id="camera-status">Preparando a câmera…</p><video autoplay playsinline></video><div class="camera-tools"><button type="button" class="secondary" id="camera-switch" disabled>Trocar câmera</button><label class="camera-zoom" id="camera-zoom-wrap" hidden><span id="camera-zoom-label">Zoom</span><input id="camera-zoom" type="range" step="0.1"></label></div><p class="small" id="camera-hint">Mantenha o QR Code bem iluminado e afaste um pouco o celular até a imagem ficar nítida.</p><p><button type="button" class="secondary" id="camera-cancel">Cancelar</button></p></div>`;
+  document.body.append(modal);
+
+  const video=modal.querySelector('video');
+  const status=modal.querySelector('#camera-status');
+  const switchButton=modal.querySelector('#camera-switch');
+  const zoomWrap=modal.querySelector('#camera-zoom-wrap');
+  const zoomInput=modal.querySelector('#camera-zoom');
+  const zoomLabel=modal.querySelector('#camera-zoom-label');
+  const canvas=document.createElement('canvas');
+  const context=canvas.getContext('2d',{willReadFrequently:true});
+  const detector=window.BarcodeDetector?new BarcodeDetector({formats:['qr_code']}):null;
+  let stream,devices=[],deviceIndex=0,scanVersion=0,closed=false;
+
+  const stop=()=>{scanVersion++;stream?.getTracks().forEach(track=>track.stop());stream=undefined};
+  const close=()=>{closed=true;stop();modal.remove()};
+  modal.querySelector('#camera-cancel').onclick=close;
+  const found=code=>{close();if(mode==='register')register(code);else if(mode==='partial')partialCode(code);else add(code)};
+
+  const configureTrack=async track=>{
+    const capabilities=track.getCapabilities?.()||{};
+    if(Array.isArray(capabilities.focusMode)&&capabilities.focusMode.includes('continuous')){
+      await track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
+    }
+    if(capabilities.zoom){
+      const min=Number(capabilities.zoom.min??1),max=Number(capabilities.zoom.max??1);
+      const current=Number(track.getSettings?.().zoom??min);
+      zoomInput.min=String(min);zoomInput.max=String(max);zoomInput.value=String(Math.min(max,Math.max(min,current)));
+      zoomWrap.hidden=false;
+      const updateLabel=()=>zoomLabel.textContent=`Zoom: ${Number(zoomInput.value).toFixed(1)}x`;
+      updateLabel();
+      zoomInput.oninput=async()=>{await track.applyConstraints({advanced:[{zoom:Number(zoomInput.value)}]}).catch(()=>{});updateLabel()};
+    }else{zoomWrap.hidden=true;zoomInput.oninput=null}
+  };
+
+  const scan=async version=>{
+    if(closed||version!==scanVersion||!modal.isConnected)return;
+    if(!video.videoWidth||!video.videoHeight){setTimeout(()=>scan(version),100);return}
+    let code='';
+    if(detector){const result=await detector.detect(video).catch(()=>[]);code=result[0]?.rawValue||''}
+    if(!code&&window.jsQR){
+      canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+      context.drawImage(video,0,0,canvas.width,canvas.height);
+      const result=window.jsQR(context.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,{inversionAttempts:'dontInvert'});
+      code=result?.data||'';
+    }
+    if(code)return found(code);
+    status.textContent='Aponte a câmera para o QR Code.';
+    setTimeout(()=>scan(version),120);
+  };
+
+  const start=async deviceId=>{
+    stop();zoomWrap.hidden=true;status.textContent='Preparando a câmera…';
+    const preferred=deviceId?{deviceId:{exact:deviceId},width:{ideal:1920},height:{ideal:1080}}:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}};
+    try{stream=await navigator.mediaDevices.getUserMedia({video:preferred,audio:false})}
+    catch(error){
+      if(deviceId)throw error;
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    }
+    if(closed){stop();return}
+    video.srcObject=stream;await video.play();
+    const track=stream.getVideoTracks()[0];
+    await configureTrack(track);
+    const activeId=track.getSettings?.().deviceId;
+    if(devices.length){const index=devices.findIndex(device=>device.deviceId===activeId);if(index>=0)deviceIndex=index}
+    switchButton.disabled=devices.length<2;
+    switchButton.textContent=devices.length>1?`Trocar câmera (${deviceIndex+1}/${devices.length})`:'Câmera traseira';
+    scan(++scanVersion);
+  };
+
+  switchButton.onclick=async()=>{
+    if(devices.length<2)return;
+    try{deviceIndex=(deviceIndex+1)%devices.length;await start(devices[deviceIndex].deviceId)}
+    catch(error){status.textContent='Não foi possível trocar a câmera.'}
+  };
+
+  try{
+    await start();
+    devices=(await navigator.mediaDevices.enumerateDevices()).filter(device=>device.kind==='videoinput');
+    const activeId=stream?.getVideoTracks()[0]?.getSettings?.().deviceId;
+    const index=devices.findIndex(device=>device.deviceId===activeId);if(index>=0)deviceIndex=index;
+    switchButton.disabled=devices.length<2;
+    switchButton.textContent=devices.length>1?`Trocar câmera (${deviceIndex+1}/${devices.length})`:'Câmera traseira';
+  }catch(error){close();const blocked=error?.name==='NotAllowedError'||error?.name==='SecurityError';msg(blocked?'A câmera foi bloqueada. Confirme a permissão do navegador e o acesso por HTTPS.':'Não foi possível abrir a câmera. Verifique se existe uma câmera disponível.',true)}
+};
+document.head.insertAdjacentHTML('beforeend','<style>.camera-modal video{width:100%;max-height:62vh;object-fit:cover;background:#001834;border-radius:.7rem}.camera-tools{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin:.8rem 0}.camera-zoom{display:flex;gap:.5rem;align-items:center;flex:1;min-width:180px;font-weight:600}.camera-zoom input{flex:1;accent-color:#ffcf3c}.camera-modal #camera-hint{margin-bottom:.4rem}</style>');
 load();
