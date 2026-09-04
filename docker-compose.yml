@@ -1,0 +1,12 @@
+services:
+  controle-movimentacao:
+    build: .
+    container_name: controle-movimentacao-melodia
+    restart: unless-stopped
+    ports:
+      - "7000:7000"
+    environment:
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      DATA_FILE: /app/data/data.json
+    volumes:
+      - ./data:/app/data
