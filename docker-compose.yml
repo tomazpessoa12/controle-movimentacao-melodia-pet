@@ -1,6 +1,9 @@
+version: '3.3'
+
 services:
   controle-movimentacao:
-    build: .
+    build:
+      context: .
     container_name: controle-movimentacao-melodia
     restart: unless-stopped
     ports:
