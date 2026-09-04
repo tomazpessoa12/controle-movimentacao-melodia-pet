@@ -1,3 +1,7 @@
+{
+    default_sni {$APP_HOST}
+}
+
 https://{$APP_HOST} {
     tls internal
     reverse_proxy controle-movimentacao:7000
