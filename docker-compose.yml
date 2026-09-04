@@ -18,7 +18,7 @@ services:
     depends_on:
       - controle-movimentacao
     ports:
-      - "80:80"
+      - "7000:7000"
       - "443:443"
     environment:
       APP_HOST: ${APP_HOST}
