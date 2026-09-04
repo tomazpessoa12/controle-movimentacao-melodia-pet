@@ -1,28 +1,16 @@
-# Controle de Transferência de Paletes — Protótipo
+# Controle de Movimentação Melodia Pet
 
-Protótipo web para testar o fluxo entre Produção e Logística.
+Aplicação web desenvolvida para digitalizar o controle de transferência de produtos acabados entre a fábrica e o galpão de armazenagem da Melodia Pet.
 
-## Acessos
+## O desafio
 
-- Produção: `http://localhost:7000/producao`
-- Logística: `http://localhost:7000/logistica`
-- Administração: `http://localhost:7000/admin`
+O acompanhamento das movimentações era feito em papel: para cada palete pronto, a equipe anotava produto, número da ordem de produção (OP), quantidade e as confirmações de saída e recebimento. Além de consumir tempo, esse processo dificultava a consulta do saldo pendente, a consolidação mensal e a comunicação diária com a logística.
 
-Produção e Logística não usam login. A área administrativa usa a senha definida pela variável privada `ADMIN_PASSWORD` no servidor.
+O objetivo do projeto foi substituir esse controle manual por uma rotina simples de usar no celular ou tablet, sem exigir digitação no processo operacional.
 
-## Executar
+## A solução
 
-É necessário Node.js 18 ou superior. No diretório do projeto, execute:
-
-```bash
-npm start
-```
-
-Para acessar por celular ou tablet na mesma rede, abra `http://IP-DO-SERVIDOR:7000/producao` ou `http://IP-DO-SERVIDOR:7000/logistica`.
-
-## Formato do QR Code
-
-Enquanto o layout do Sankhya não estiver pronto, use este texto para testar a leitura manual:
+Cada capa de produção passa a receber um QR Code com as informações do palete:
 
 ```text
 IDENTIFICADOR_UNICO|PRODUTO|NUMERO_OP|QUANTIDADE
@@ -34,25 +22,61 @@ Exemplo:
 10123-030926-11:57:30-000381|M1x Seed Papagaio|1001|500
 ```
 
-O QR final da capa deve conter a mesma estrutura. O identificador precisa ser único, por exemplo: `CODPROD-DDMMAA-HH:MI:SS-SEQUENCIA`.
+Com a leitura do QR Code, o sistema registra automaticamente o palete como pronto para transferência. O identificador combina código do produto, data/hora e sequência para evitar duplicidades.
 
-Na tela de Produção e na de Recebimento, use o botão **Ler QR Code** para testar com a webcam. Autorize o navegador a usar a câmera. O campo manual fica disponível apenas como contingência.
+## Fluxos operacionais
 
-## Aviso Discord
+### Produção
 
-No link Administração, informe o webhook do canal de logística, selecione os dias da semana e defina o horário no formato 24h. Clique em **Enviar teste** para validar o webhook.
+- Registra paletes prontos por leitura de QR Code;
+- Mantém a lista de paletes pendentes até a transferência real;
+- Permite cancelar um palete pendente, exigindo o motivo;
+- Permite retirar unidades avulsas de um palete para adiantamentos, reduzindo o saldo do palete original.
 
-## Observação para implantação
+### Logística
 
-Este protótipo usa um arquivo `data.json` como base de dados, adequado para validar a rotina. Para a implantação definitiva, é recomendável substituir esse arquivo por banco de dados com backup automático e acesso HTTPS.
+- Adiciona os paletes recebidos por leitura de QR Code;
+- Inclui unidades avulsas disponíveis no mesmo recebimento;
+- Agrupa vários paletes e/ou avulsos em uma única confirmação;
+- Exige assinatura digital antes de habilitar a confirmação do recebimento;
+- Permite corrigir inclusões acidentais antes da confirmação.
 
-## Implantação com Git e Docker
+### Administração
 
-Entregue a pasta `pallet-transfer-prototype` ao TI para ser colocada em um repositório Git. No servidor, ele deve:
+- Centraliza todas as funções de Produção e Logística, inclusive entradas manuais como contingência;
+- Exibe relatório mensal de movimentações com totalizadores;
+- Diferencia visualmente recebimentos de paletes e de unidades avulsas;
+- Mostra a assinatura, data/hora e os itens que compõem cada recebimento;
+- Configura o webhook, dias e horário do resumo automático enviado ao Discord.
 
-1. Clonar o repositório.
-2. Criar um arquivo `.env` a partir de `.env.example` e definir a senha administrativa.
-3. Executar `docker compose up -d --build` na pasta do projeto.
-4. Configurar o acesso externo para as rotas `/producao`, `/logistica` e `/admin`.
+## Comunicação com a logística
 
-Os dados do controle ficarão na pasta `data` ao lado do projeto, preservados quando o contêiner for atualizado. Essa pasta deve entrar na rotina de backup do servidor.
+O sistema consolida os paletes pendentes e pode enviar um resumo automático ao canal de logística no Discord, por exemplo:
+
+```text
+5 paletes
+1.000 unidades de M1x Seed Papagaio
+500 unidades de M1x Seed Periquito
+```
+
+O envio é configurável por dia da semana e horário, permitindo adaptar a rotina ao encerramento diário da fábrica.
+
+## Decisões de projeto
+
+- **Sem login na operação:** Produção e Logística usam links diretos para reduzir burocracia. A validação do destino é registrada pela assinatura digital.
+- **QR Code em vez de digitação:** reduz erros e torna o registro rápido no chão de fábrica.
+- **Recebimento em lote:** reflete a operação real, na qual vários paletes são transportados e recebidos juntos.
+- **Dados persistentes separados da aplicação:** permite atualizar o sistema sem perder os registros operacionais.
+- **Interface responsiva:** pensada para uso em celular, tablet e computador na rede interna.
+
+## Tecnologias utilizadas
+
+- Node.js, utilizando apenas recursos nativos para o servidor HTTP e APIs;
+- HTML, CSS e JavaScript puro no front-end;
+- Leitura de QR Code pela câmera do dispositivo, quando suportada pelo navegador;
+- Docker e Docker Compose para padronizar a execução no servidor;
+- Webhook do Discord para a comunicação automática com a logística.
+
+## Próximos passos possíveis
+
+O projeto foi estruturado para validar a rotina operacional. Em uma evolução futura, o armazenamento local pode ser migrado para um banco de dados relacional, com backup automatizado e maior suporte a acessos simultâneos.
