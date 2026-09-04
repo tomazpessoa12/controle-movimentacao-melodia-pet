@@ -1,4 +1,6 @@
 data
+caddy_data
+caddy_config
 node_modules
 .git
 README.md
