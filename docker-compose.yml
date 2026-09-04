@@ -1,15 +1,26 @@
-version: '3.3'
-
 services:
   controle-movimentacao:
-    build:
-      context: .
+    build: .
     container_name: controle-movimentacao-melodia
     restart: unless-stopped
-    ports:
-      - "7000:7000"
     environment:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       DATA_FILE: /app/data/data.json
     volumes:
       - ./data:/app/data
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: controle-movimentacao-https
+    restart: unless-stopped
+    depends_on:
+      - controle-movimentacao
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_HOST: ${APP_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy_data:/data
+      - ./caddy_config:/config
