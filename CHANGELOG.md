@@ -2,6 +2,18 @@
 
 Todas as alterações relevantes do Controle de Movimentação Melodia Pet são registradas neste arquivo.
 
+## v1.0.1 — 10/09/2026
+
+### Melhorias
+
+- Sistema configurado como aplicativo instalável (PWA) em dispositivos compatíveis.
+- Ícone, abertura em janela própria e suporte ao menu **Instalar app** do navegador.
+- Backup local das configurações, incluindo o webhook do Discord, junto aos dados operacionais.
+
+### Correções de bugs
+
+- Sem correções nesta versão.
+
 ## v1.0.0 — 10/09/2026
 
 ### Melhorias

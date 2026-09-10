@@ -2,7 +2,7 @@
 
 Aplicação web desenvolvida para digitalizar o controle de transferência de produtos acabados entre a fábrica e o galpão de armazenagem da Melodia Pet.
 
-**Versão atual:** `v1.0.0` · Consulte o histórico completo em [CHANGELOG.md](CHANGELOG.md).
+**Versão atual:** `v1.0.1` · Consulte o histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## O desafio
 
@@ -70,7 +70,9 @@ O envio é configurável por dia da semana e horário, permitindo adaptar a roti
 - **QR Code em vez de digitação:** reduz erros e torna o registro rápido no chão de fábrica.
 - **Recebimento em lote:** reflete a operação real, na qual vários paletes são transportados e recebidos juntos.
 - **Dados persistentes separados da aplicação:** permite atualizar o sistema sem perder os registros operacionais.
+- **Configurações privadas persistentes:** webhook do Discord e demais configurações ficam dentro da pasta local `data`, fora do GitHub.
 - **Interface responsiva:** pensada para uso em celular, tablet e computador na rede interna.
+- **Aplicativo instalável (PWA):** em dispositivos compatíveis, pode ser instalado pelo navegador e aberto em uma janela própria.
 
 ## Tecnologias utilizadas
 

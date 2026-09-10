@@ -1,5 +1,5 @@
-.env
+# Dados operacionais e configurações privadas do servidor
 data/
+.env
 caddy_data/
 caddy_config/
-node_modules/

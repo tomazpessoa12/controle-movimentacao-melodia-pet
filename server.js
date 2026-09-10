@@ -5,6 +5,7 @@ const crypto = require('crypto');
 
 const PORT = Number(process.env.PORT || 3000);
 const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
+const SETTINGS_FILE = path.join(path.dirname(DATA_FILE), 'settings.json');
 const PUBLIC = path.join(__dirname, 'public');
 const sessions = new Map();
 
@@ -23,8 +24,11 @@ function seed() {
     pallets: [], partials: [], receipts: [], resetRequests: [], settings: { discordWebhook: '', discordHour: '18:00', discordDays: [1,2,3,4,5], lastDiscordDigest: '', defaultProductColor:'#001834', productLines: [{name:'BIOAVIS BITS',match:'BIOAVIS BITS',color:'#17341E'},{name:'BIOAVIS MIX',match:'BIOAVIS MIX',color:'#2E2B62'},{name:'M1X SEED',match:'M1X SEED',color:'#FFCD10'},{name:'HPRO',match:'HPRO',color:'#E2752A'},{name:'ZOOPRIME',match:'ZOOPRIME',color:'#2C2B26'}] }
   };
 }
-function readData() { if (!fs.existsSync(DATA_FILE)) { const data = seed(); writeData(data); return data; } const data=JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));if(!data.settings.productLines)data.settings.productLines=seed().settings.productLines;if(!data.settings.defaultProductColor)data.settings.defaultProductColor='#001834';return data; }
-function writeData(data) { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2)); }
+function defaultSettings() { return seed().settings; }
+function normalizeSettings(settings = {}) { const defaults = defaultSettings(); return { ...defaults, ...settings, productLines: settings.productLines || defaults.productLines, defaultProductColor: settings.defaultProductColor || defaults.defaultProductColor }; }
+function readSettingsBackup() { try { return normalizeSettings(JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'))); } catch { return null; } }
+function readData() { if (!fs.existsSync(DATA_FILE)) { const data = seed(); data.settings = readSettingsBackup() || data.settings; writeData(data); return data; } const data=JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));data.settings=normalizeSettings(data.settings||readSettingsBackup()||{});return data; }
+function writeData(data) { fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true }); fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2)); fs.writeFileSync(SETTINGS_FILE, JSON.stringify(normalizeSettings(data.settings), null, 2)); }
 function publicUser(u) { return { id: u.id, name: u.name, sector: u.sector, username: u.username, active: u.active, forcePasswordChange: u.forcePasswordChange }; }
 function tokenUser(req, data) { const token = (req.headers.authorization || '').replace('Bearer ', ''); const session = sessions.get(token); if (!session) return null; return data.users.find(u => u.id === session.userId && u.active) || null; }
 function send(res, status, body) { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(body)); }
@@ -48,7 +52,7 @@ const server = http.createServer(async (req, res) => {
     const file = ['/', '/producao', '/logistica', '/admin'].includes(url.pathname) ? 'index.html' : url.pathname.slice(1);
     const target = path.resolve(PUBLIC, file);
     if (!target.startsWith(PUBLIC) || !fs.existsSync(target)) { res.writeHead(404); return res.end('Não encontrado'); }
-    const types = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
+    const types = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.webmanifest': 'application/manifest+json; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png' };
     res.writeHead(200, { 'Content-Type': types[path.extname(target)] || 'application/octet-stream' }); return fs.createReadStream(target).pipe(res);
   }
   const data = readData();
