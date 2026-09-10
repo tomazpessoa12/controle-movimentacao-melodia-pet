@@ -2,6 +2,8 @@
 
 Aplicação web desenvolvida para digitalizar o controle de transferência de produtos acabados entre a fábrica e o galpão de armazenagem da Melodia Pet.
 
+**Versão atual:** `v1.0.0` · Consulte o histórico completo em [CHANGELOG.md](CHANGELOG.md).
+
 ## O desafio
 
 O acompanhamento das movimentações era feito em papel: para cada palete pronto, a equipe anotava produto, número da ordem de produção (OP), quantidade e as confirmações de saída e recebimento. Além de consumir tempo, esse processo dificultava a consulta do saldo pendente, a consolidação mensal e a comunicação diária com a logística.
@@ -48,6 +50,7 @@ Com a leitura do QR Code, o sistema registra automaticamente o palete como pront
 - Diferencia visualmente recebimentos de paletes e de unidades avulsas;
 - Mostra a assinatura, data/hora e os itens que compõem cada recebimento;
 - Configura o webhook, dias e horário do resumo automático enviado ao Discord.
+- Permite configurar linhas de produto, cores de identificação e uma cor padrão para itens sem regra.
 
 ## Comunicação com a logística
 
