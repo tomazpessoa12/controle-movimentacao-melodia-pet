@@ -1,7 +1,7 @@
-const CACHE = 'melodia-movimentacao-v1.0.1';
+const CACHE = 'melodia-movimentacao-v1.1.5';
 const ASSETS = [
-  '/', '/producao', '/logistica', '/admin', '/style.css', '/app.js',
-  '/vendor/jsQR.js', '/melodia-logo.png', '/manifest.webmanifest',
+  '/', '/producao', '/logistica', '/admin', '/producao.html', '/logistica.html', '/style.css', '/app.js',
+  '/vendor/jsQR.js', '/melodia-logo.png', '/manifest.webmanifest', '/manifest-producao.webmanifest', '/manifest-logistica.webmanifest',
   '/icons/icon-192.png', '/icons/icon-512.png'
 ];
 
