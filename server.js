@@ -49,7 +49,7 @@ function parseCode(code) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (req.method === 'GET' && !url.pathname.startsWith('/api/')) {
-    const pages = { '/': 'index.html', '/producao': 'producao.html', '/logistica': 'logistica.html', '/admin': 'index.html' };
+    const pages = { '/': 'index.html', '/producao': 'producao.html', '/logistica': 'logistica.html', '/admin': 'admin.html' };
     const file = pages[url.pathname] || url.pathname.slice(1);
     const target = path.resolve(PUBLIC, file);
     if (!target.startsWith(PUBLIC) || !fs.existsSync(target)) { res.writeHead(404); return res.end('Não encontrado'); }

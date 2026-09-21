@@ -2,7 +2,7 @@
 
 Aplicação web desenvolvida para digitalizar o controle de transferência de produtos acabados entre a fábrica e o galpão de armazenagem da Melodia Pet.
 
-**Versão atual:** `v1.1.5` · Consulte o histórico completo em [CHANGELOG.md](CHANGELOG.md).
+**Versão atual:** `v1.1.6` · Consulte o histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## O desafio
 

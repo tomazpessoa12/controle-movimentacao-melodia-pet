@@ -1,6 +1,6 @@
 {
   "name": "controle-transferencia-paletes",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "private": true,
   "description": "Protótipo web para controle de transferência de paletes",
   "scripts": { "start": "node server.js" }

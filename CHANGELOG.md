@@ -2,6 +2,16 @@
 
 Todas as alterações relevantes do Controle de Movimentação Melodia Pet são registradas neste arquivo.
 
+## v1.1.6 — 21/09/2026
+
+### Melhorias
+
+- Admin passa a ter manifesto PWA próprio, com nome e instalação independentes.
+
+### Correções de bugs
+
+- Aplicativo instalado a partir de `/admin` passa a abrir diretamente no Admin, sem redirecionar para Produção.
+
 ## v1.1.5 — 18/09/2026
 
 ### Melhorias
